@@ -111,40 +111,8 @@ const Dashboard = () => {
                 ))}
             </div>
 
-            {/* URL Analysis Section */}
-            <div className="card url-analysis">
-                <div className="card-header">
-                    <h3 className="card-title">
-                        <Shield size={18} />
-                        Real-Time URL Analysis
-                    </h3>
-                </div>
-                <div className="url-input-row">
-                    <input
-                        type="text"
-                        className="url-input"
-                        placeholder="Enter URL to analyze (e.g., https://suspicious-site.xyz/verify-upi)"
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                    />
-                    <button className="scan-btn">
-                        <Search size={18} />
-                        Scan URL
-                    </button>
-                </div>
-                <div className="quick-test">
-                    <span className="quick-test-label">Quick Test:</span>
-                    {quickTestUrls.map((url, index) => (
-                        <span
-                            key={index}
-                            className={`test-chip ${url.safe ? 'safe' : 'danger'}`}
-                            onClick={() => setUrlInput(url.label)}
-                        >
-                            {url.safe ? '✓' : '⚠'} {url.label}
-                        </span>
-                    ))}
-                </div>
-            </div>
+           
+           
 
             {/* Main Dashboard Grid */}
             <div className="dashboard-grid">

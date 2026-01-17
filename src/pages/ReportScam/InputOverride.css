@@ -1,0 +1,27 @@
+/* Input Styles - Normal (for non-auth pages) */
+.report-scam-page .input {
+    display: flex;
+    height: 2.5rem;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    color: #111827;
+}
+
+.report-scam-page .input::placeholder {
+    color: #9ca3af;
+}
+
+.report-scam-page .input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.report-scam-page .input:hover {
+    border-color: #d1d5db;
+}

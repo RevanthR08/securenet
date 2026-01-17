@@ -10,7 +10,8 @@ import {
     Settings,
     AlertTriangle,
     Trophy,
-    Puzzle
+    Puzzle,
+    Users
 } from 'lucide-react';
 import './MobileNav.css';
 
@@ -23,6 +24,7 @@ const MobileNav = () => {
         { path: '/scanner', label: 'URL Scanner', icon: Search },
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/live-feed', label: 'Live Feed', icon: Activity },
+        { path: '/community', label: 'Community', icon: Users },
         { path: '/rule-engine', label: 'Rule Engine', icon: Settings },
         { path: '/report', label: 'Report Scam', icon: AlertTriangle },
         { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },

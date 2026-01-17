@@ -18,7 +18,8 @@ import {
   Home,
   FileWarning,
   Activity,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import Dashboard from './pages/Dashboard';
@@ -29,6 +30,9 @@ import Extension from './pages/Extension';
 import LiveFeed from './pages/LiveFeed';
 import RuleEngine from './pages/RuleEngine';
 import TestPage from './pages/TestPage';
+import Community from './pages/Community';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import './App.css';
 
 // Logo component
@@ -96,6 +100,11 @@ function App() {
       icon: <Activity size={20} />
     },
     {
+      label: 'Community',
+      href: '/community',
+      icon: <Users size={20} />
+    },
+    {
       label: 'Rule Engine',
       href: '/rule-engine',
       icon: <Settings size={20} />
@@ -117,38 +126,47 @@ function App() {
     }
   ];
 
+  const isAuthPage = () => {
+    const path = window.location.pathname;
+    return path === '/login' || path === '/register';
+  };
+
   return (
     <Router>
       <div className="app-container">
-        <MobileNav />
-        <Sidebar open={open} setOpen={setOpen}>
-          <SidebarBody className="sidebar-body">
-            <div className="sidebar-content">
-              {open ? <Logo open={open} /> : <LogoIcon />}
-              <nav className="sidebar-nav">
-                {links.map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
-                ))}
-              </nav>
-            </div>
-            <div className="sidebar-footer">
-              <motion.span
-                animate={{
-                  display: open ? 'block' : 'none',
-                  opacity: open ? 1 : 0,
-                }}
-                className="version-badge"
-              >
-                v1.0.0 Beta
-              </motion.span>
-            </div>
-          </SidebarBody>
-        </Sidebar>
+        {!isAuthPage() && <MobileNav />}
+        {!isAuthPage() && (
+          <Sidebar open={open} setOpen={setOpen}>
+            <SidebarBody className="sidebar-body">
+              <div className="sidebar-content">
+                {open ? <Logo open={open} /> : <LogoIcon />}
+                <nav className="sidebar-nav">
+                  {links.map((link, idx) => (
+                    <SidebarLink key={idx} link={link} />
+                  ))}
+                </nav>
+              </div>
+              <div className="sidebar-footer">
+                <motion.span
+                  animate={{
+                    display: open ? 'block' : 'none',
+                    opacity: open ? 1 : 0,
+                  }}
+                  className="version-badge"
+                >
+                  v1.0.0 Beta
+                </motion.span>
+              </div>
+            </SidebarBody>
+          </Sidebar>
+        )}
 
         <main
-          className="main-content"
+          className={cn('main-content', {
+            'auth-main-content': isAuthPage()
+          })}
           style={{
-            marginLeft: open ? '260px' : '70px',
+            marginLeft: isAuthPage() ? '0' : (open ? '260px' : '70px'),
           }}
         >
           <Routes>
@@ -156,6 +174,9 @@ function App() {
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/live-feed" element={<LiveFeed />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/rule-engine" element={<RuleEngine />} />
             <Route path="/report" element={<ReportScam />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
