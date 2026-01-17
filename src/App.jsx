@@ -16,7 +16,8 @@ import {
   Puzzle,
   Home,
   FileWarning,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import Dashboard from './pages/Dashboard';
@@ -25,6 +26,7 @@ import ReportScam from './pages/ReportScam';
 import Leaderboard from './pages/Leaderboard';
 import Extension from './pages/Extension';
 import LiveFeed from './pages/LiveFeed';
+import RuleEngine from './pages/RuleEngine';
 import './App.css';
 
 // Logo component
@@ -84,6 +86,11 @@ function App() {
       icon: <Activity size={20} />
     },
     {
+      label: 'Rule Engine',
+      href: '/rule-engine',
+      icon: <Settings size={20} />
+    },
+    {
       label: 'Report Scam',
       href: '/report',
       icon: <AlertTriangle size={20} />
@@ -138,6 +145,7 @@ function App() {
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/live-feed" element={<LiveFeed />} />
+            <Route path="/rule-engine" element={<RuleEngine />} />
             <Route path="/report" element={<ReportScam />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/extension" element={<Extension />} />

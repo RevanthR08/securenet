@@ -15,6 +15,9 @@
     flex-shrink: 0;
     overflow: hidden;
     z-index: 100;
+    will-change: width;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 @media (min-width: 768px) {

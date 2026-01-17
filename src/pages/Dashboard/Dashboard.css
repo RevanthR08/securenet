@@ -1,8 +1,9 @@
 /* Dashboard Page Styles */
 
 .dashboard-page {
-    padding: 2rem;
-    max-width: 1600px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: none;
 }
 
 /* Page Header */
@@ -173,7 +174,7 @@
 /* Dashboard Grid Layout */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 420px;
     gap: 1.5rem;
 }
 
