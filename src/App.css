@@ -1,0 +1,33 @@
+/* App Layout Styles */
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f5f7;
+}
+
+.sidebar-body {
+  justify-content: space-between;
+  gap: 2.5rem;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.main-content {
+  flex: 1;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease-in-out;
+  background: #f5f5f7;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
