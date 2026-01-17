@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -6,6 +6,7 @@ import {
   SidebarBody,
   SidebarLink
 } from './components/Sidebar/Sidebar';
+import MobileNav from './components/MobileNav';
 import { cn } from './lib/utils';
 import {
   Shield,
@@ -27,6 +28,7 @@ import Leaderboard from './pages/Leaderboard';
 import Extension from './pages/Extension';
 import LiveFeed from './pages/LiveFeed';
 import RuleEngine from './pages/RuleEngine';
+import TestPage from './pages/TestPage';
 import './App.css';
 
 // Logo component
@@ -63,6 +65,14 @@ const LogoIcon = () => {
 
 function App() {
   const [open, setOpen] = useState(false);
+
+  // Capacitor WebView stabilization on mount
+  useEffect(() => {
+    // Initial stabilization
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 300);
+  }, []);
 
   const links = [
     {
@@ -110,6 +120,7 @@ function App() {
   return (
     <Router>
       <div className="app-container">
+        <MobileNav />
         <Sidebar open={open} setOpen={setOpen}>
           <SidebarBody className="sidebar-body">
             <div className="sidebar-content">

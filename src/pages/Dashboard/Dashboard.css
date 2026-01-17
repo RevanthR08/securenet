@@ -1,9 +1,15 @@
 /* Dashboard Page Styles */
 
 .dashboard-page {
-    padding: 1.5rem;
+    padding: 1rem;
     width: 100%;
     max-width: none;
+}
+
+@media (min-width: 768px) {
+    .dashboard-page {
+        padding: 1.5rem;
+    }
 }
 
 /* Page Header */
@@ -315,6 +321,21 @@
 .chart-container {
     height: 280px;
     margin-top: 0.5rem;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px !important;
+        width: 100% !important;
+        min-height: 250px;
+    }
+
+    /* Force ResponsiveContainer to have dimensions */
+    .chart-container>div {
+        width: 100% !important;
+        height: 250px !important;
+    }
 }
 
 .chart-legend {
@@ -495,6 +516,24 @@
     width: 200px;
     height: 200px;
     flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .donut-container {
+        flex-direction: column;
+    }
+
+    .donut-chart {
+        width: 220px !important;
+        height: 220px !important;
+        min-width: 220px;
+        min-height: 220px;
+    }
+
+    .donut-chart>div {
+        width: 220px !important;
+        height: 220px !important;
+    }
 }
 
 .donut-legend {

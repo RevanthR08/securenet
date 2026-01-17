@@ -1,0 +1,477 @@
+/* Global Mobile Fixes - Prevent Horizontal Scroll */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+}
+
+#root {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.app-container {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.main-content {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Mobile-First Responsive Styles */
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    *:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    button:hover,
+    a:hover,
+    .card:hover,
+    .stat-card:hover,
+    .rule-card:hover,
+    .activity-item:hover,
+    .test-chip:hover {
+        background: inherit !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+
+    /* Prevent any overflow */
+    body {
+        overflow-x: hidden !important;
+    }
+
+    /* FORCE hide desktop sidebar on mobile - critical for portrait mode */
+    .desktop-sidebar,
+    .sidebar,
+    .sidebar-body,
+    aside {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* FORCE full width main content on mobile */
+    .main-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .app-container {
+        display: block !important;
+    }
+
+    /* Reduce padding on mobile - with breathing room */
+    .dashboard-page,
+    .landing-page,
+    .rule-engine-page,
+    .scanner-page,
+    .extension-page {
+        padding: 0.875rem !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Stack grids vertically on mobile */
+    .stats-grid,
+    .features-grid,
+    .dashboard-grid,
+    .architecture-grid,
+    .installation-guide,
+    .feature-highlights,
+    .status-cards {
+        grid-template-columns: 1fr !important;
+        gap: 0.625rem !important;
+        width: 100% !important;
+    }
+
+    /* Reduce card sizes on mobile */
+    .card,
+    .stat-card,
+    .feature-card,
+    .status-card,
+    .rule-card,
+    .community-card {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    /* Make dashboard cards fit screen */
+    .dashboard-page .card {
+        padding: 0.875rem !important;
+        padding-left: 0.875rem !important;
+        padding-right: 0.875rem !important;
+        margin: 0 !important;
+        margin-bottom: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Force equal padding on all containers */
+    .dashboard-grid,
+    .dashboard-main,
+    .dashboard-sidebar {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Compact stat cards */
+    .stat-card {
+        padding: 0.75rem !important;
+    }
+
+    .stat-icon {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+    }
+
+    /* Smaller stat values */
+    .stat-value,
+    .status-card-value {
+        font-size: 1.375rem !important;
+    }
+
+    .stat-label,
+    .status-card-label {
+        font-size: 0.6875rem !important;
+    }
+
+    .stat-change {
+        font-size: 0.625rem !important;
+    }
+
+    /* Compact chart cards */
+    .chart-container {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Smaller donut chart */
+    .donut-chart {
+        width: 170px !important;
+        height: 170px !important;
+        min-width: 170px !important;
+        max-width: 170px !important;
+        margin: 0 auto !important;
+    }
+
+    .donut-legend {
+        padding: 0 !important;
+    }
+
+    .donut-legend-item {
+        font-size: 0.6875rem !important;
+        padding: 0.25rem 0 !important;
+    }
+
+    /* Compact gauge */
+    .gauge-chart {
+        width: 150px !important;
+        height: 150px !important;
+        max-width: 150px !important;
+        margin: 0 auto !important;
+    }
+
+    .gauge-number {
+        font-size: 1.75rem !important;
+    }
+
+    .gauge-label {
+        font-size: 0.6875rem !important;
+    }
+
+    /* Smaller risk stats */
+    .risk-stats {
+        gap: 0.5rem !important;
+    }
+
+    .risk-stat-value {
+        font-size: 1.25rem !important;
+    }
+
+    .risk-stat-label {
+        font-size: 0.625rem !important;
+    }
+
+    /* Compact community cards */
+    .community-card {
+        padding: 0.75rem !important;
+    }
+
+    .community-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .community-value {
+        font-size: 1rem !important;
+    }
+
+    .community-label {
+        font-size: 0.6875rem !important;
+    }
+
+    /* Compact activity feed */
+    .activity-item {
+        padding: 0.625rem !important;
+    }
+
+    .activity-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .activity-url {
+        font-size: 0.75rem !important;
+    }
+
+    .activity-type {
+        font-size: 0.6875rem !important;
+    }
+
+    .activity-badge {
+        font-size: 0.625rem !important;
+        padding: 0.125rem 0.375rem !important;
+    }
+
+    /* Adjust font sizes for mobile */
+    h1 {
+        font-size: 1.375rem !important;
+    }
+
+    h2 {
+        font-size: 1.125rem !important;
+    }
+
+    h3 {
+        font-size: 1rem !important;
+    }
+
+    .hero-title {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .hero-description {
+        font-size: 0.875rem !important;
+    }
+
+    /* Hero Section - Fix alignment and width */
+    .hero-section {
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        border-radius: 0 !important;
+    }
+
+    .hero-content {
+        padding: 1.5rem 1rem !important;
+        width: 100% !important;
+    }
+
+    /* Make buttons full width on mobile */
+    .hero-actions {
+        flex-direction: column !important;
+        width: 100%;
+    }
+
+    .hero-actions .btn {
+        width: 100% !important;
+    }
+
+    /* Stack hero stats vertically */
+    .hero-stats {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Make donut chart responsive */
+    .donut-container {
+        flex-direction: column !important;
+    }
+
+    .donut-chart {
+        width: 100% !important;
+        max-width: 200px !important;
+        margin: 0 auto !important;
+    }
+
+    /* Adjust chart heights for mobile */
+    .chart-container {
+        height: 200px !important;
+    }
+
+    /* Make flow diagrams vertical on mobile */
+    .flow-diagram {
+        flex-direction: column !important;
+    }
+
+    .flow-arrow {
+        transform: rotate(90deg) !important;
+    }
+
+    /* Reduce rule card complexity on mobile */
+    .rule-card {
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+        padding: 0.875rem !important;
+    }
+
+    .rule-info {
+        width: 100% !important;
+    }
+
+    .rule-name {
+        font-size: 0.8125rem !important;
+    }
+
+    .rule-description {
+        font-size: 0.6875rem !important;
+    }
+
+    .rule-actions {
+        width: 100%;
+        justify-content: flex-end !important;
+    }
+
+    /* Make tables scroll horizontally */
+    .code-block {
+        overflow-x: auto;
+        font-size: 0.6875rem !important;
+    }
+
+    /* Adjust live feed layout */
+    .feed-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .feed-sidebar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* Smaller feature highlights on mobile */
+    .feature-highlight-card {
+        padding: 1rem !important;
+    }
+
+    .feature-highlight-icon {
+        width: 44px !important;
+        height: 44px !important;
+    }
+
+    /* Reduce dashboard header size */
+    .dashboard-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Activity feed items smaller */
+    .activity-item {
+        padding: 0.75rem !important;
+    }
+
+    .activity-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* Scanner page adjustments */
+    .scanner-input-section {
+        padding: 1rem !important;
+    }
+
+    .url-input {
+        font-size: 0.875rem !important;
+    }
+
+    /* Verdict card smaller */
+    .verdict-card {
+        padding: 1.25rem !important;
+    }
+
+    /* Phase analysis compact */
+    .phase-item {
+        padding: 0.875rem !important;
+    }
+
+    .phase-badge {
+        font-size: 0.625rem !important;
+    }
+}
+
+/* Small phone screens */
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.5rem !important;
+    }
+
+    .stat-value {
+        font-size: 1.25rem !important;
+    }
+
+    .feature-highlights {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Tablet landscape */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) {
+
+    button,
+    a,
+    .nav-item {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    .toggle-switch {
+        min-width: 52px !important;
+        min-height: 32px !important;
+    }
+}

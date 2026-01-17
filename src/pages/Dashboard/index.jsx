@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     PieChart, Pie, Cell
 } from 'recharts';
+import SafeChart from '../../components/SafeChart';
 import {
     Shield,
     Search,
@@ -61,6 +62,11 @@ const quickTestUrls = [
 
 const Dashboard = () => {
     const [urlInput, setUrlInput] = useState('');
+
+    // Force WebView to reflow on mount (Capacitor-specific fix)
+    useEffect(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, []);
 
     const stats = [
         { label: 'Total Scans', value: 39, icon: Search, color: 'blue', change: '+12%' },
@@ -157,7 +163,7 @@ const Dashboard = () => {
                             </select>
                         </div>
                         <div className="chart-container">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <SafeChart height={280}>
                                 <LineChart data={timelineData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
@@ -174,7 +180,7 @@ const Dashboard = () => {
                                     <Line type="monotone" dataKey="warned" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} />
                                     <Line type="monotone" dataKey="allowed" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
                                 </LineChart>
-                            </ResponsiveContainer>
+                            </SafeChart>
                         </div>
                         <div className="chart-legend">
                             <span className="legend-item"><span className="legend-dot" style={{ background: '#ef4444' }}></span> Blocked</span>
@@ -193,7 +199,7 @@ const Dashboard = () => {
                         </div>
                         <div className="donut-container">
                             <div className="donut-chart">
-                                <ResponsiveContainer width="100%" height={200}>
+                                <SafeChart height={200}>
                                     <PieChart>
                                         <Pie
                                             data={fraudCategories}
@@ -210,7 +216,7 @@ const Dashboard = () => {
                                         </Pie>
                                         <Tooltip />
                                     </PieChart>
-                                </ResponsiveContainer>
+                                </SafeChart>
                             </div>
                             <div className="donut-legend">
                                 {fraudCategories.map((category, index) => (
@@ -237,7 +243,7 @@ const Dashboard = () => {
                         </div>
                         <div className="risk-gauge">
                             <div className="gauge-chart">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <SafeChart height={180}>
                                     <PieChart>
                                         <Pie
                                             data={[{ value: 45 }, { value: 55 }]}
@@ -253,7 +259,7 @@ const Dashboard = () => {
                                             <Cell fill="#e5e7eb" />
                                         </Pie>
                                     </PieChart>
-                                </ResponsiveContainer>
+                                </SafeChart>
                                 <div className="gauge-value">
                                     <div className="gauge-number">45</div>
                                     <div className="gauge-label">Risk Score</div>
