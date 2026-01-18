@@ -19,7 +19,8 @@ import {
   FileWarning,
   Activity,
   Settings,
-  Users
+  Users,
+  Microscope
 } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import Dashboard from './pages/Dashboard';
@@ -27,6 +28,7 @@ import Landing from './pages/Landing';
 import ReportScam from './pages/ReportScam';
 import Leaderboard from './pages/Leaderboard';
 import Extension from './pages/Extension';
+import Sandbox from './pages/Sandbox';
 import LiveFeed from './pages/LiveFeed';
 import RuleEngine from './pages/RuleEngine';
 import TestPage from './pages/TestPage';
@@ -105,6 +107,11 @@ function App() {
       icon: <Users size={20} />
     },
     {
+      label: 'Sandbox',
+      href: '/sandbox',
+      icon: <Microscope size={20} />
+    },
+    {
       label: 'Rule Engine',
       href: '/rule-engine',
       icon: <Settings size={20} />
@@ -175,6 +182,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/live-feed" element={<LiveFeed />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/sandbox" element={<Sandbox />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/rule-engine" element={<RuleEngine />} />

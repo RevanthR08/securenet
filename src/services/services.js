@@ -8,6 +8,18 @@ export const scannerService = {
   },
 };
 
+// Sandbox Service
+export const sandboxService = {
+  submitScan: async (url) => {
+    const response = await api.post('/api/scan/sandbox', { url });
+    return response.data;
+  },
+  getResults: async (uuid) => {
+    const response = await api.get(`/api/scan/sandbox/${uuid}`);
+    return response.data;
+  },
+};
+
 // Report Service
 export const reportService = {
   reportScam: async (url) => {

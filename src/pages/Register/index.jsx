@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
 import { authService } from '../../services/auth';
+import { connectToExtension } from '../../services/extension';
 import {
     Shield,
     ChevronLeft,
@@ -86,6 +87,14 @@ const Register = () => {
 
         try {
             await authService.register(name, email, password);
+
+            // Sync with Chrome Extension
+            const user = authService.getCurrentUser();
+            const token = localStorage.getItem('access_token');
+            if (token && user) {
+                connectToExtension(token, user);
+            }
+
             // Redirect to dashboard on success
             navigate('/dashboard');
         } catch (err) {

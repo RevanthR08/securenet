@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { statsService, profileService } from '../../services/services';
 import { authService } from '../../services/auth';
+import { connectToExtension } from '../../services/extension';
 import './Dashboard.css';
 
 /* Mock data - Commented for future reference
@@ -131,6 +132,16 @@ const Dashboard = () => {
     // Force WebView to reflow on mount (Capacitor-specific fix)
     useEffect(() => {
         window.dispatchEvent(new Event('resize'));
+    }, []);
+
+    // Sync with Chrome Extension on Dashboard load
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        const user = authService.getCurrentUser();
+
+        if (token && user) {
+            connectToExtension(token, user);
+        }
     }, []);
 
     const statsCards = [

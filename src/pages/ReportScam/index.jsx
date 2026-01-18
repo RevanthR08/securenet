@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     AlertTriangle,
     Shield,
@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
-import { reportService } from '../../services/services';
+import { reportService, profileService, communityService } from '../../services/services';
+import { authService } from '../../services/auth';
 import './ReportScam.css';
 import './InputOverride.css';
 import '../Login/AlertStyles.css';
@@ -97,15 +98,83 @@ const ReportScam = () => {
     */
 
     // Live data - using backend
-    const userStats = {
+    const [userStats, setUserStats] = useState({
         scamsReported: 0,
         threatsConfirmed: 0,
         highRiskScams: 0,
         auraCoins: 0
-    };
+    });
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [myReports, setMyReports] = useState([]);
+    const [reportsLoading, setReportsLoading] = useState(true);
 
-    const myReports = []; // Will be loaded from API when endpoint is ready
     const coinsHistory = []; // Will be loaded from API when endpoint is ready
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setProfileLoading(true);
+                const user = authService.getCurrentUser();
+
+                if (user && user.id) {
+                    const profile = await profileService.getProfile(user.id);
+
+                    console.log('👤 User Profile:', profile);
+
+                    setUserStats({
+                        scamsReported: profile.total_reports || 0,
+                        threatsConfirmed: profile.verified_reports || 0,
+                        highRiskScams: Math.floor((profile.verified_reports || 0) * 0.6), // Estimate
+                        auraCoins: profile.aura_points || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Profile fetch error:', error);
+            } finally {
+                setProfileLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
+    // Fetch user's reports from community feed
+    useEffect(() => {
+        const fetchMyReports = async () => {
+            try {
+                setReportsLoading(true);
+                const user = authService.getCurrentUser();
+
+                if (user && user.id) {
+                    // Get community feed
+                    const feedData = await communityService.getLiveFeed();
+
+                    console.log('📋 Community Feed:', feedData);
+                    console.log('📋 First scan object:', feedData[0]);
+                    console.log('📋 User ID to match:', user.id);
+
+                    // Filter for current user's reports
+                    const userReports = (feedData.reports || feedData || []).filter(
+                        report => {
+                            console.log('Checking report:', report.id, 'created_by:', report.created_by);
+                            return report.created_by === user.id;
+                        }
+                    );
+
+                    console.log('📋 My Reports:', userReports);
+
+                    setMyReports(userReports);
+                }
+            } catch (error) {
+                console.error('Reports fetch error:', error);
+            } finally {
+                setReportsLoading(false);
+            }
+        };
+
+        fetchMyReports();
+    }, []);
 
 
     const handleSubmit = async (e) => {
@@ -137,6 +206,24 @@ const ReportScam = () => {
             // Auto-hide success after 5 seconds
             setTimeout(() => setSuccess(''), 5000);
 
+            // Refresh user profile to update stats
+            const user = authService.getCurrentUser();
+            if (user && user.id) {
+                const updatedProfile = await profileService.getProfile(user.id);
+                setUserStats({
+                    scamsReported: updatedProfile.total_reports || 0,
+                    threatsConfirmed: updatedProfile.verified_reports || 0,
+                    highRiskScams: Math.floor((updatedProfile.verified_reports || 0) * 0.6),
+                    auraCoins: updatedProfile.aura_points || 0
+                });
+
+                // Refresh reports list
+                const feedData = await communityService.getLiveFeed();
+                const userReports = (feedData.reports || feedData || []).filter(
+                    report => report.created_by === user.id
+                );
+                setMyReports(userReports);
+            }
         } catch (err) {
             console.error('Report error:', err);
             setError(err.message || 'Failed to submit report. Please try again.');

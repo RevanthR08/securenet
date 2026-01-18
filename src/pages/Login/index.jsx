@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
 import { authService } from '../../services/auth';
+import { connectToExtension } from '../../services/extension';
 import {
     Shield,
     ChevronLeft,
@@ -83,7 +84,18 @@ const Login = () => {
         setLoading(true);
 
         try {
-            await authService.login(email, password);
+            const response = await authService.login(email, password);
+
+            // Sync with Chrome Extension
+            const user = authService.getCurrentUser();
+            const token = localStorage.getItem('access_token'); // ← Fixed: was 'token', now 'access_token'
+            console.log('🔍 About to sync with extension...', { token: !!token, user: !!user });
+            if (token && user) {
+                connectToExtension(token, user);
+            } else {
+                console.warn('❌ Cannot sync - missing token or user:', { token: !!token, user: !!user });
+            }
+
             // Redirect to dashboard on success
             navigate('/dashboard');
         } catch (err) {
