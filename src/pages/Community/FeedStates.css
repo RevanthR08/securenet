@@ -1,0 +1,47 @@
+/* Loading and Error States */
+.feed-loading,
+.feed-error,
+.feed-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.feed-loading svg.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.feed-error {
+    color: #ef4444;
+}
+
+.feed-error svg {
+    color: #ef4444;
+    margin-bottom: 1rem;
+}
+
+.feed-empty svg {
+    margin-bottom: 1rem;
+    color: #9ca3af;
+}
+
+.feed-loading p,
+.feed-error p,
+.feed-empty p {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}

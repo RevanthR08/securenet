@@ -15,16 +15,22 @@ import {
 } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
+import { reportService } from '../../services/services';
 import './ReportScam.css';
 import './InputOverride.css';
+import '../Login/AlertStyles.css';
+import './SuccessAlert.css';
 
 const ReportScam = () => {
     const [reportType, setReportType] = useState('url');
     const [reportValue, setReportValue] = useState('');
     const [category, setCategory] = useState('');
     const [expandedRow, setExpandedRow] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
-    // Mock data
+    /* Mock data - Commented for future reference
     const userStats = {
         scamsReported: 12,
         threatsConfirmed: 9,
@@ -88,13 +94,55 @@ const ReportScam = () => {
         { amount: 25, reason: 'Medium phishing email', date: '1 day ago' },
         { amount: 10, reason: 'Low-risk suspicious link', date: '5 days ago' }
     ];
+    */
 
-    const handleSubmit = (e) => {
+    // Live data - using backend
+    const userStats = {
+        scamsReported: 0,
+        threatsConfirmed: 0,
+        highRiskScams: 0,
+        auraCoins: 0
+    };
+
+    const myReports = []; // Will be loaded from API when endpoint is ready
+    const coinsHistory = []; // Will be loaded from API when endpoint is ready
+
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Reporting scam:', { reportType, reportValue, category });
-        alert('Thanks for protecting the community! 🛡️');
-        setReportValue('');
-        setCategory('');
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            // Call backend API to report scam
+            const response = await reportService.reportScam(reportValue);
+
+            // DEBUG: Log exact backend response
+            console.log('🔍 Report Backend Response:', response);
+            console.log('Full response object:', JSON.stringify(response, null, 2));
+
+            // Show success message with Aura points earned
+            const coinsEarned = response.aura_points || response.coins_earned || response.aura_coins || 0;
+            console.log('Coins earned:', coinsEarned);
+
+            setSuccess(
+                `✅ Thank you! Scam reported successfully. ${coinsEarned > 0 ? `You earned +${coinsEarned} AuraCoins!` : ''}`
+            );
+
+            // Reset form
+            setReportValue('');
+            setCategory('');
+
+            // Auto-hide success after 5 seconds
+            setTimeout(() => setSuccess(''), 5000);
+
+        } catch (err) {
+            console.error('Report error:', err);
+            setError(err.message || 'Failed to submit report. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getThreatColor = (level) => {
@@ -137,6 +185,20 @@ const ReportScam = () => {
                 <h2 className="section-title">Submit a Report</h2>
 
                 <form onSubmit={handleSubmit} className="report-form">
+                    {error && (
+                        <div className="error-alert">
+                            <AlertTriangle size={16} />
+                            {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="success-alert">
+                            <CheckCircle size={16} />
+                            {success}
+                        </div>
+                    )}
+
                     <div className="form-group">
                         <label>Report Type</label>
                         <div className="type-selector">
@@ -198,8 +260,8 @@ const ReportScam = () => {
                         </select>
                     </div>
 
-                    <ArrowDotsButton type="submit">
-                        Report Scam
+                    <ArrowDotsButton type="submit" disabled={loading}>
+                        {loading ? 'Submitting Report...' : 'Report Scam'}
                     </ArrowDotsButton>
                 </form>
             </div>

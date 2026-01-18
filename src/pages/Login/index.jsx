@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
+import { authService } from '../../services/auth';
 import {
     Shield,
     ChevronLeft,
@@ -12,6 +13,7 @@ import {
     Apple
 } from 'lucide-react';
 import './Login.css';
+import './AlertStyles.css';
 
 // Google Icon SVG
 const GoogleIcon = (props) => (
@@ -70,11 +72,26 @@ const FloatingPaths = ({ position }) => {
 
 const Login = () => {
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Login with email:', email);
-        // Add your login logic here
+        setError('');
+        setLoading(true);
+
+        try {
+            await authService.login(email, password);
+            // Redirect to dashboard on success
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed. Please check your credentials.');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -155,6 +172,13 @@ const Login = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {error && (
+                            <div className="error-alert">
+                                <AlertTriangle size={16} />
+                                {error}
+                            </div>
+                        )}
+
                         <p className="form-hint">
                             Enter your email address to sign in or create an account
                         </p>
@@ -173,8 +197,18 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <ArrowDotsButton type="submit" className="submit-btn">
-                            Continue With Email
+                        <div className="input-wrapper">
+                            <Input
+                                type="password"
+                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <ArrowDotsButton type="submit" className="submit-btn" disabled={loading}>
+                            {loading ? 'Signing in...' : 'Continue With Email'}
                         </ArrowDotsButton>
                     </form>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Shield,
     Activity,
@@ -11,9 +11,11 @@ import {
     Zap,
     Clock
 } from 'lucide-react';
+import { communityService } from '../../services/services';
 import './Community.css';
+import './FeedStates.css';
 
-// Mock data
+/* Mock data - Commented for future reference
 const communityReports = [
     {
         url: 'https://paytm-verify-kyc-update.xyz/claim-reward',
@@ -61,13 +63,55 @@ const communityReports = [
         reporter: null
     }
 ];
+*/
+
 
 const Community = () => {
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
     const stats = [
         { label: 'Reports (24h)', value: '0', icon: Activity, color: 'red' },
-        { label: 'Total Threats', value: '19', icon: Globe, color: 'purple' },
+        { label: 'Total Threats', value: reports.length.toString(), icon: Globe, color: 'purple' },
         { label: 'Top Threat Type', value: 'UPI Scam', icon: TrendingUp, color: 'orange', subtitle: true }
     ];
+
+    // Fetch community feed on mount
+    useEffect(() => {
+        const fetchFeed = async () => {
+            try {
+                setLoading(true);
+                const data = await communityService.getLiveFeed();
+
+                // Transform backend data to match UI format
+                const transformedReports = (data.reports || data.feed || data || []).map(report => ({
+                    url: report.url || report.scanned_url || '',
+                    type: report.category || report.type || 'Unknown',
+                    status: report.status || 'Auto-Detected',
+                    verified: report.verified || false,
+                    firstReport: report.first_report || false,
+                    time: new Date(report.created_at || report.timestamp).toLocaleTimeString(),
+                    note: report.note || report.description || '',
+                    reporter: report.reporter || null
+                }));
+
+                setReports(transformedReports);
+                setError('');
+            } catch (err) {
+                console.error('Feed error:', err);
+                setError('Failed to load community feed');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFeed();
+
+        // Optional: Refresh every 10 seconds
+        const interval = setInterval(fetchFeed, 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="community-page">
@@ -116,7 +160,28 @@ const Community = () => {
                     </div>
 
                     <div className="reports-feed">
-                        {communityReports.map((report, index) => (
+                        {loading && (
+                            <div className="feed-loading">
+                                <Clock size={24} className="spinning" />
+                                <p>Loading live feed...</p>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="feed-error">
+                                <AlertTriangle size={24} />
+                                <p>{error}</p>
+                            </div>
+                        )}
+
+                        {!loading && !error && reports.length === 0 && (
+                            <div className="feed-empty">
+                                <Shield size={40} />
+                                <p>No reports yet. Be the first to report!</p>
+                            </div>
+                        )}
+
+                        {!loading && !error && reports.map((report, index) => (
                             <div key={index} className="report-item">
                                 <div className="report-main">
                                     <div className="report-url">

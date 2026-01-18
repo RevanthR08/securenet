@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ArrowDotsButton } from '../../components/ui/ArrowDotsButton';
+import { authService } from '../../services/auth';
 import {
     Shield,
     ChevronLeft,
     AtSign,
     Github,
-    Apple
+    Apple,
+    AlertTriangle
 } from 'lucide-react';
 import '../Login/Login.css';
+import '../Login/AlertStyles.css';
 
 // Google Icon SVG
 const GoogleIcon = (props) => (
@@ -69,12 +72,28 @@ const FloatingPaths = ({ position }) => {
 };
 
 const Register = () => {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Register with email:', email);
-        // Add your registration logic here
+        setError('');
+        setLoading(true);
+
+        try {
+            await authService.register(name, email, password);
+            // Redirect to dashboard on success
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Registration failed. Please try again.');
+            console.error('Register error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -155,9 +174,24 @@ const Register = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {error && (
+                            <div className="error-alert">
+                                <AlertTriangle size={16} />
+                                {error}
+                            </div>
+                        )}
+
                         <p className="form-hint">
-                            Enter your email address to create a new account
+                            Create your account to join the Cyber Guardians
                         </p>
+
+                        <Input
+                            type="text"
+                            placeholder="Your Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
 
                         <div className="input-wrapper">
                             <Input
@@ -173,8 +207,16 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <ArrowDotsButton type="submit" className="submit-btn">
-                            Create Account
+                        <Input
+                            type="password"
+                            placeholder="Create a password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <ArrowDotsButton type="submit" className="submit-btn" disabled={loading}>
+                            {loading ? 'Creating Account...' : 'Create Account'}
                         </ArrowDotsButton>
                     </form>
 

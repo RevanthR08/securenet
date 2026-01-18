@@ -19,6 +19,7 @@
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.0.1",
     "@radix-ui/react-slot": "^1.2.4",
+    "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "framer-motion": "^12.26.2",
     "lucide-react": "^0.562.0",

@@ -21,9 +21,11 @@ import {
     XCircle,
     AlertCircle
 } from 'lucide-react';
+import { statsService, profileService } from '../../services/services';
+import { authService } from '../../services/auth';
 import './Dashboard.css';
 
-// Mock data
+/* Mock data - Commented for future reference
 const timelineData = [
     { date: 'Jan 11', blocked: 12, warned: 5, allowed: 18 },
     { date: 'Jan 12', blocked: 28, warned: 8, allowed: 22 },
@@ -59,20 +61,83 @@ const quickTestUrls = [
     { label: 'sbi-netbanking-secur...', safe: false },
     { label: 'gpay-cashback-100-ru...', safe: false },
 ];
+*/
+
+// Live data placeholders (will be populated from backend)
+const timelineData = [];
+const fraudCategories = [];
+const recentActivity = [];
+const quickTestUrls = [
+    { label: 'google.com', safe: true },
+    { label: 'amazon.in', safe: true },
+    { label: 'my-online-shopping-store.com', safe: false },
+    { label: 'paytm-verify-kyc-upd...', safe: false },
+    { label: 'sbi-netbanking-secur...', safe: false },
+    { label: 'gpay-cashback-100-ru...', safe: false },
+];
+
+
 
 const Dashboard = () => {
     const [urlInput, setUrlInput] = useState('');
+    const [stats, setStats] = useState({
+        totalScans: 0,
+        blocked: 0,
+        warned: 0,
+        safe: 0
+    });
+    const [fraudCategories, setFraudCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch real-time stats from backend
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                setLoading(true);
+                const data = await statsService.getSummary();
+
+                console.log('📊 Dashboard Stats:', data);
+
+                // Update stats from backend
+                setStats({
+                    totalScans: data.total_scans || 0,
+                    blocked: data.breakdown?.Dangerous || 0,
+                    warned: data.breakdown?.Medium || 0,
+                    safe: data.breakdown?.Safe || 0
+                });
+
+                // Set fraud categories for pie chart
+                if (data.chart_data && data.chart_data.length > 0) {
+                    setFraudCategories(data.chart_data.map(item => ({
+                        name: item.name,
+                        value: item.value,
+                        color: item.color
+                    })));
+                }
+            } catch (error) {
+                console.error('Dashboard stats error:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+
+        // Refresh every 30 seconds
+        const interval = setInterval(fetchStats, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Force WebView to reflow on mount (Capacitor-specific fix)
     useEffect(() => {
         window.dispatchEvent(new Event('resize'));
     }, []);
 
-    const stats = [
-        { label: 'Total Scans', value: 39, icon: Search, color: 'blue', change: '+12%' },
-        { label: 'Threats Blocked', value: 18, icon: ShieldX, color: 'red', change: '+5%' },
-        { label: 'Warnings Issued', value: 1, icon: AlertTriangle, color: 'orange', change: '+2' },
-        { label: 'Safe URLs', value: 20, icon: ShieldCheck, color: 'green', change: '+8%' },
+    const statsCards = [
+        { label: 'Total Scans', value: stats.totalScans, icon: Search, color: 'blue', change: '+12%' },
+        { label: 'Threats Blocked', value: stats.blocked, icon: ShieldX, color: 'red', change: '+5%' },
+        { label: 'Warnings Issued', value: stats.warned, icon: AlertTriangle, color: 'orange', change: '+2' },
+        { label: 'Safe URLs', value: stats.safe, icon: ShieldCheck, color: 'green', change: '+8%' },
     ];
 
     return (
@@ -94,7 +159,7 @@ const Dashboard = () => {
 
             {/* Stats Grid */}
             <div className="stats-grid">
-                {stats.map((stat, index) => (
+                {statsCards.map((stat, index) => (
                     <div key={index} className="stat-card">
                         <div className={`stat-icon ${stat.color}`}>
                             <stat.icon size={24} />
@@ -111,8 +176,8 @@ const Dashboard = () => {
                 ))}
             </div>
 
-           
-           
+
+
 
             {/* Main Dashboard Grid */}
             <div className="dashboard-grid">
@@ -166,15 +231,17 @@ const Dashboard = () => {
                             </h3>
                         </div>
                         <div className="donut-container">
-                            <div className="donut-chart">
-                                <SafeChart height={200}>
+                        </div>
+                        <div className="chart-container">
+                            <SafeChart height={300}>
+                                {fraudCategories.length > 0 ? (
                                     <PieChart>
                                         <Pie
                                             data={fraudCategories}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
-                                            outerRadius={90}
+                                            outerRadius={100}
                                             paddingAngle={2}
                                             dataKey="value"
                                         >
@@ -182,20 +249,37 @@ const Dashboard = () => {
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip
+                                            contentStyle={{
+                                                background: '#fff',
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '0.5rem',
+                                                fontSize: '0.875rem'
+                                            }}
+                                        />
                                     </PieChart>
-                                </SafeChart>
-                            </div>
-                            <div className="donut-legend">
+                                ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
+                                        {loading ? 'Loading data...' : 'No fraud data available'}
+                                    </div>
+                                )}
+                            </SafeChart>
+                        </div>
+
+                        {/* Fraud Category Legend */}
+                        {fraudCategories.length > 0 && (
+                            <div className="fraud-legend">
                                 {fraudCategories.map((category, index) => (
-                                    <div key={index} className="donut-legend-item">
-                                        <span className="donut-legend-color" style={{ background: category.color }}></span>
-                                        <span className="donut-legend-label">{category.name}</span>
-                                        <span className="donut-legend-value">{category.value}%</span>
+                                    <div key={index} className="legend-item">
+                                        <div className="legend-color" style={{ background: category.color }}></div>
+                                        <div className="legend-info">
+                                            <div className="legend-name">{category.name}</div>
+                                            <div className="legend-value">{category.value} scans</div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 

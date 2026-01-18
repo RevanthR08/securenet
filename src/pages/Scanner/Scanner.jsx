@@ -17,9 +17,10 @@ import {
     AlertOctagon,
     Loader2
 } from 'lucide-react';
+import { scannerService } from '../../services/services';
 import './Scanner.css';
 
-// Mock data for demonstration
+/* Mock data for demonstration - Commented for future reference
 const mockResults = {
     safe: {
         verdict: 'safe',
@@ -107,6 +108,15 @@ const sampleUrls = [
     { label: 'paytm-verify-kyc-upd...', url: 'https://paytm-verify-kyc-update.xyz', safe: false },
     { label: 'sbi-netbanking-secur...', url: 'https://sbi-netbanking-secure-login.com', safe: false }
 ];
+*/
+
+const sampleUrls = [
+    { label: 'google.com', url: 'https://www.google.com', safe: true },
+    { label: 'amazon.in', url: 'https://www.amazon.in', safe: true },
+    { label: 'my-online-shopping-store.com', url: 'https://my-online-shopping-store.com', safe: false },
+    { label: 'paytm-verify-kyc-upd...', url: 'https://paytm-verify-kyc-update.xyz', safe: false },
+    { label: 'sbi-netbanking-secur...', url: 'https://sbi-netbanking-secure-login.com', safe: false }
+];
 
 const Scanner = () => {
     const [url, setUrl] = useState('');
@@ -120,25 +130,68 @@ const Scanner = () => {
         setIsScanning(true);
         setResult(null);
 
-        // Simulate three-phase scanning
+        // Simulate phase updates for UX
         const phases = [
             'Phase 1: Local Sanity Check...',
             'Phase 2: Network Intelligence...',
             'Phase 3: Browser Context Analysis...'
         ];
 
-        for (const phase of phases) {
-            setScanPhase(phase);
-            await new Promise(resolve => setTimeout(resolve, 800));
+        // Show phases with timing
+        const phaseInterval = setInterval(() => {
+            const currentPhaseIndex = phases.findIndex(p => p === scanPhase);
+            if (currentPhaseIndex < phases.length - 1) {
+                setScanPhase(phases[currentPhaseIndex + 1]);
+            }
+        }, 600);
+
+        try {
+            setScanPhase(phases[0]);
+
+            // Call real backend API
+            const response = await scannerService.scanUrl(url);
+
+            clearInterval(phaseInterval);
+
+            // DEBUG: Log the exact backend response
+            console.log('🔍 Backend Scanner Response:', response);
+            console.log('Verdict:', response.verdict);
+            console.log('Risk Score:', response.risk_score);
+
+            // Transform backend response to match UI format
+            setResult({
+                verdict: response.verdict?.toLowerCase() || 'unknown',
+                url: url,
+                riskScore: response.risk_score || 0,
+                phases: response.phases || [],
+                chain: response.threat_chain || response.reasoning_chain || []
+            });
+
+        } catch (error) {
+            clearInterval(phaseInterval);
+            console.error('Scan error:', error);
+
+            // Show error result
+            setResult({
+                verdict: 'error',
+                url: url,
+                riskScore: 0,
+                phases: [{
+                    name: 'Error',
+                    subtitle: 'Scan Failed',
+                    time: '0ms',
+                    checks: [{
+                        status: 'fail',
+                        title: 'Scan failed',
+                        description: error.message || 'Unable to scan URL. Please try again.'
+                    }]
+                }],
+                chain: []
+            });
+        } finally {
+            setIsScanning(false);
+            setScanPhase('');
         }
-
-        // Determine result based on URL
-        const isSafe = url.includes('google.com') || url.includes('amazon.in') ||
-            url.includes('facebook.com') || url.includes('github.com');
-
-        setResult(isSafe ? mockResults.safe : mockResults.danger);
-        setIsScanning(false);
-        setScanPhase('');
     };
 
     const handleSampleUrl = (sampleUrl) => {
