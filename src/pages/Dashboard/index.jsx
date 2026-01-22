@@ -16,12 +16,11 @@ import {
     Zap,
     BarChart3,
     Activity,
-    Globe,
     CheckCircle2,
     XCircle,
     AlertCircle
 } from 'lucide-react';
-import { statsService, profileService } from '../../services/services';
+import { statsService, profileService, historyService } from '../../services/services';
 import { authService } from '../../services/auth';
 import { connectToExtension } from '../../services/extension';
 import './Dashboard.css';
@@ -65,7 +64,6 @@ const quickTestUrls = [
 */
 
 // Live data placeholders (will be populated from backend)
-const timelineData = [];
 const fraudCategories = [];
 const recentActivity = [];
 const quickTestUrls = [
@@ -88,6 +86,7 @@ const Dashboard = () => {
         safe: 0
     });
     const [fraudCategories, setFraudCategories] = useState([]);
+    const [timelineData, setTimelineData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Fetch real-time stats from backend
@@ -107,13 +106,21 @@ const Dashboard = () => {
                     safe: data.breakdown?.Safe || 0
                 });
 
-                // Set fraud categories for pie chart
+                // Set fraud categories for pie chart with fallback to verdict breakdown
                 if (data.chart_data && data.chart_data.length > 0) {
                     setFraudCategories(data.chart_data.map(item => ({
                         name: item.name,
                         value: item.value,
                         color: item.color
                     })));
+                } else {
+                    // Fallback to verdict stats if no specific categories
+                    const fallbackData = [
+                        { name: 'Safe', value: data.breakdown?.Safe || 0, color: '#22c55e' },
+                        { name: 'Warning', value: data.breakdown?.Medium || 0, color: '#f59e0b' },
+                        { name: 'Dangerous', value: data.breakdown?.Dangerous || 0, color: '#ef4444' }
+                    ].filter(item => item.value > 0);
+                    setFraudCategories(fallbackData);
                 }
             } catch (error) {
                 console.error('Dashboard stats error:', error);
@@ -124,8 +131,8 @@ const Dashboard = () => {
 
         fetchStats();
 
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchStats, 30000);
+        // Refresh every 15 seconds as per user request
+        const interval = setInterval(fetchStats, 15000);
         return () => clearInterval(interval);
     }, []);
 
@@ -144,6 +151,65 @@ const Dashboard = () => {
         }
     }, []);
 
+    // Fetch Scan History for Timeline
+    useEffect(() => {
+        const fetchTimelineData = async () => {
+            try {
+                const history = await historyService.getHistory();
+                console.log('📜 Scan History:', history);
+
+                // Process data to group by date
+                const groupedData = {};
+
+                history.forEach(scan => {
+                    // Extract date from created_at
+                    const date = new Date(scan.created_at);
+                    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    if (!groupedData[dateStr]) {
+                        groupedData[dateStr] = { date: dateStr, blocked: 0, warned: 0, allowed: 0 };
+                    }
+
+                    if (scan.verdict === 'Dangerous') groupedData[dateStr].blocked++;
+                    else if (scan.verdict === 'Medium') groupedData[dateStr].warned++;
+                    else groupedData[dateStr].allowed++;
+                });
+
+                // Convert to array and sort by date (Backend likely returns descending, we want ascending for chart)
+                const timelineArray = Object.keys(groupedData)
+                    .sort((a, b) => new Date(a) - new Date(b))
+                    .map(key => groupedData[key]);
+
+                // Limit to last 7 days for the weekly view
+                setTimelineData(timelineArray.slice(-7));
+            } catch (error) {
+                console.error('Timeline data error:', error);
+            }
+        };
+
+        fetchTimelineData();
+        const interval = setInterval(fetchTimelineData, 15000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Calculate Risk Score
+    const calculateRiskScore = () => {
+        if (!stats.totalScans) return 0;
+        const score = ((stats.blocked * 1.0) + (stats.warned * 0.5)) / stats.totalScans * 100;
+        return Math.min(Math.round(score), 100);
+    };
+
+    const riskScore = calculateRiskScore();
+
+    const getRiskInfo = (score) => {
+        if (score <= 20) return { level: 'SAFE', class: 'safe', color: '#22c55e' };
+        if (score <= 50) return { level: 'MODERATE', class: 'moderate', color: '#f59e0b' };
+        if (score <= 80) return { level: 'HIGH', class: 'high', color: '#ef4444' };
+        return { level: 'CRITICAL', class: 'critical', color: '#991b1b' };
+    };
+
+    const riskInfo = getRiskInfo(riskScore);
+
     const statsCards = [
         { label: 'Total Scans', value: stats.totalScans, icon: Search, color: 'blue', change: '+12%' },
         { label: 'Threats Blocked', value: stats.blocked, icon: ShieldX, color: 'red', change: '+5%' },
@@ -153,7 +219,7 @@ const Dashboard = () => {
 
     return (
         <div className="dashboard-page">
-            {/* Header */}
+            {/* ... existing header and stats grid ... */}
             <div className="dashboard-header">
                 <div className="dashboard-title">
                     <Shield size={28} />
@@ -186,9 +252,6 @@ const Dashboard = () => {
                     </div>
                 ))}
             </div>
-
-
-
 
             {/* Main Dashboard Grid */}
             <div className="dashboard-grid">
@@ -238,12 +301,10 @@ const Dashboard = () => {
                         <div className="card-header">
                             <h3 className="card-title">
                                 <AlertTriangle size={18} />
-                                Fraud Category Distribution
+                                Threat Distribution
                             </h3>
                         </div>
-                        <div className="donut-container">
-                        </div>
-                        <div className="chart-container">
+                        <div className="chart-container" style={{ position: 'relative' }}>
                             <SafeChart height={300}>
                                 {fraudCategories.length > 0 ? (
                                     <PieChart>
@@ -251,10 +312,12 @@ const Dashboard = () => {
                                             data={fraudCategories}
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={60}
+                                            innerRadius={70}
                                             outerRadius={100}
-                                            paddingAngle={2}
+                                            paddingAngle={5}
                                             dataKey="value"
+                                            animationBegin={0}
+                                            animationDuration={1500}
                                         >
                                             {fraudCategories.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
@@ -271,24 +334,53 @@ const Dashboard = () => {
                                     </PieChart>
                                 ) : (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                                        {loading ? 'Loading data...' : 'No fraud data available'}
+                                        {loading ? 'Loading stats...' : 'No threat data available'}
                                     </div>
                                 )}
                             </SafeChart>
+                            {/* Center Label for Donut */}
+                            {fraudCategories.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    textAlign: 'center',
+                                    pointerEvents: 'none'
+                                }}>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>{stats.totalScans}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Total</div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Fraud Category Legend */}
+                        {/* Enhanced Category Legend */}
                         {fraudCategories.length > 0 && (
-                            <div className="fraud-legend">
-                                {fraudCategories.map((category, index) => (
-                                    <div key={index} className="legend-item">
-                                        <div className="legend-color" style={{ background: category.color }}></div>
-                                        <div className="legend-info">
-                                            <div className="legend-name">{category.name}</div>
-                                            <div className="legend-value">{category.value} scans</div>
+                            <div className="fraud-legend-enhanced" style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                gap: '1rem',
+                                padding: '1rem',
+                                marginTop: '0.5rem',
+                                borderTop: '1px solid #f3f4f6'
+                            }}>
+                                {fraudCategories.map((category, index) => {
+                                    const percentage = stats.totalScans > 0
+                                        ? Math.round((category.value / stats.totalScans) * 100)
+                                        : 0;
+                                    return (
+                                        <div key={index} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: category.color, flexShrink: 0 }}></div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '0.8125rem', fontWeight: '500', color: '#374151' }}>{category.name}</div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{category.value} scans</span>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: category.color }}>{percentage}%</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -309,7 +401,7 @@ const Dashboard = () => {
                                 <SafeChart height={180}>
                                     <PieChart>
                                         <Pie
-                                            data={[{ value: 45 }, { value: 55 }]}
+                                            data={[{ value: riskScore }, { value: Math.max(0, 100 - riskScore) }]}
                                             cx="50%"
                                             cy="50%"
                                             startAngle={180}
@@ -318,29 +410,29 @@ const Dashboard = () => {
                                             outerRadius={80}
                                             dataKey="value"
                                         >
-                                            <Cell fill="#f59e0b" />
+                                            <Cell fill={riskInfo.color} />
                                             <Cell fill="#e5e7eb" />
                                         </Pie>
                                     </PieChart>
                                 </SafeChart>
                                 <div className="gauge-value">
-                                    <div className="gauge-number">45</div>
+                                    <div className="gauge-number">{riskScore}</div>
                                     <div className="gauge-label">Risk Score</div>
                                 </div>
                             </div>
-                            <span className="risk-level moderate">MODERATE</span>
+                            <span className={`risk-level ${riskInfo.class}`}>{riskInfo.level}</span>
                         </div>
                         <div className="risk-stats">
                             <div className="risk-stat">
-                                <div className="risk-stat-value" style={{ color: '#ef4444' }}>18</div>
+                                <div className="risk-stat-value" style={{ color: '#ef4444' }}>{stats.blocked}</div>
                                 <div className="risk-stat-label">Blocked</div>
                             </div>
                             <div className="risk-stat">
-                                <div className="risk-stat-value" style={{ color: '#f59e0b' }}>1</div>
+                                <div className="risk-stat-value" style={{ color: '#f59e0b' }}>{stats.warned}</div>
                                 <div className="risk-stat-label">Warned</div>
                             </div>
                             <div className="risk-stat">
-                                <div className="risk-stat-value" style={{ color: '#22c55e' }}>20</div>
+                                <div className="risk-stat-value" style={{ color: '#22c55e' }}>{stats.safe}</div>
                                 <div className="risk-stat-label">Safe</div>
                             </div>
                         </div>

@@ -11,7 +11,7 @@ import {
     Zap,
     Clock
 } from 'lucide-react';
-import { communityService } from '../../services/services';
+import { communityService, reportService } from '../../services/services';
 import './Community.css';
 import './FeedStates.css';
 
@@ -82,20 +82,35 @@ const Community = () => {
         const fetchFeed = async () => {
             try {
                 setLoading(true);
-                const data = await communityService.getLiveFeed();
+
+                // Fetch all user reports from the community
+                const data = await reportService.getAllReports();
+
+                console.log('🌐 Community Reports Data:', data);
 
                 // Transform backend data to match UI format
-                const transformedReports = (data.reports || data.feed || data || []).map(report => ({
-                    url: report.url || report.scanned_url || '',
-                    type: report.category || report.type || 'Unknown',
-                    status: report.status || 'Auto-Detected',
-                    verified: report.verified || false,
-                    firstReport: report.first_report || false,
-                    time: new Date(report.created_at || report.timestamp).toLocaleTimeString(),
-                    note: report.note || report.description || '',
-                    reporter: report.reporter || null
-                }));
+                const transformedReports = (data.reports || data.feed || data || []).map(report => {
+                    let domain = 'Unknown';
+                    try {
+                        const urlToParse = report.url?.includes('://') ? report.url : `http://${report.url}`;
+                        domain = new URL(urlToParse).hostname;
+                    } catch (e) {
+                        domain = report.url || 'Unknown';
+                    }
 
+                    return {
+                        url: report.url || report.scanned_url || '',
+                        type: report.category || report.type || 'Scam Report',
+                        status: report.status || 'Pending',
+                        verified: report.status === 'Verified' || report.verified || false,
+                        firstReport: report.first_report || false,
+                        time: new Date(report.created_at || report.timestamp).toLocaleTimeString(),
+                        note: report.note || report.description || '',
+                        reporter: report.username || (report.created_by ? `User#${report.created_by.toString().slice(-4)}` : null)
+                    };
+                });
+
+                console.log('✅ Transformed Reports:', transformedReports);
                 setReports(transformedReports);
                 setError('');
             } catch (err) {
@@ -108,8 +123,8 @@ const Community = () => {
 
         fetchFeed();
 
-        // Optional: Refresh every 10 seconds
-        const interval = setInterval(fetchFeed, 10000);
+        // Refresh every 15 seconds
+        const interval = setInterval(fetchFeed, 15000);
         return () => clearInterval(interval);
     }, []);
 

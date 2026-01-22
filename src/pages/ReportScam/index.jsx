@@ -429,13 +429,17 @@ const ReportScam = () => {
                                     <div className="detail-section">
                                         <h4>Triggered Rules:</h4>
                                         <ul className="triggers-list">
-                                            {report.details.triggers.map((trigger, i) => (
-                                                <li key={i}>✔ {trigger}</li>
-                                            ))}
+                                            {(report.details?.triggers || []).length > 0 ? (
+                                                report.details.triggers.map((trigger, i) => (
+                                                    <li key={i}>✔ {trigger}</li>
+                                                ))
+                                            ) : (
+                                                <li>✔ Report submitted for analysis</li>
+                                            )}
                                         </ul>
                                     </div>
 
-                                    {report.details.matchedDatasets.length > 0 && (
+                                    {(report.details?.matchedDatasets || []).length > 0 && (
                                         <div className="detail-section">
                                             <h4>Matched Datasets:</h4>
                                             <div className="datasets">
@@ -459,7 +463,7 @@ const ReportScam = () => {
 
                                     <div className="detail-section">
                                         <h4>Coin Reward:</h4>
-                                        <p className="coin-breakdown">{report.details.coinBreakdown}</p>
+                                        <p className="coin-breakdown">{report.details?.coinBreakdown || 'Pending verification'}</p>
                                     </div>
 
                                     <div className="detail-footer">

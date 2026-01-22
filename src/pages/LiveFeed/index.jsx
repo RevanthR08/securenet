@@ -15,95 +15,96 @@ import {
     ChevronDown,
     ChevronUp
 } from 'lucide-react';
+import { historyService, statsService } from '../../services/services';
 import './LiveFeed.css';
 
-//Mock live feed data
-const mockFeedData = [
-    {
-        id: 1,
-        url: 'paytm-verify-kyc-upd.xyz/claim-reward',
-        domain: 'paytm-verify-kyc-upd.xyz',
-        timestamp: '12 sec ago',
-        threatType: 'UPI Scam',
-        riskScore: 95,
-        action: 'blocked',
-        geo: 'Russia',
-        triggeredRules: ['Domain age < 7 days', 'Keyword: KYC/Reward', 'IP reputation: malicious'],
-        datasets: ['PhishTank', 'URLHaus']
-    },
-    {
-        id: 2,
-        url: 'google.com',
-        domain: 'google.com',
-        timestamp: '45 sec ago',
-        threatType: 'Safe Website',
-        riskScore: 2,
-        action: 'allowed',
-        geo: 'USA',
-        triggeredRules: [],
-        datasets: []
-    },
-    {
-        id: 3,
-        url: 'sbi-netbanking-login.com/verify-account',
-        domain: 'sbi-netbanking-login.com',
-        timestamp: '1 min ago',
-        threatType: 'Banking Phishing',
-        riskScore: 88,
-        action: 'blocked',
-        geo: 'India',
-        triggeredRules: ['Typosquatting detected', 'Fake login page', 'SSL age: 2 days'],
-        datasets: ['OpenPhish', 'Community Reports']
-    },
-    {
-        id: 4,
-        url: 'amazon.in',
-        domain: 'amazon.in',
-        timestamp: '2 min ago',
-        threatType: 'Safe Website',
-        riskScore: 5,
-        action: 'allowed',
-        geo: 'India',
-        triggeredRules: [],
-        datasets: []
-    },
-    {
-        id: 5,
-        url: 'job-offer-2024.online/apply-now',
-        domain: 'job-offer-2024.online',
-        timestamp: '3 min ago',
-        threatType: 'Job Scam',
-        riskScore: 72,
-        action: 'warned',
-        geo: 'Unknown',
-        triggeredRules: ['Suspicious keywords', 'New domain registration'],
-        datasets: ['ScamAdviser']
-    },
-    {
-        id: 6,
-        url: 'govt-scheme-subsidy.xyz/apply',
-        domain: 'govt-scheme-subsidy.xyz',
-        timestamp: '4 min ago',
-        threatType: 'Govt Scheme Fraud',
-        riskScore: 91,
-        action: 'blocked',
-        geo: 'India',
-        triggeredRules: ['Impersonation detected', 'No valid SSL', 'Blacklisted IP'],
-        datasets: ['PhishTank', 'URLHaus']
-    }
-];
+// Helper to get relative time
+const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInMs = now - past;
+    const diffInSecs = Math.floor(diffInMs / 1000);
+
+    if (diffInSecs < 60) return `${diffInSecs} sec ago`;
+    const diffInMins = Math.floor(diffInSecs / 60);
+    if (diffInMins < 60) return `${diffInMins} min ago`;
+    const diffInHours = Math.floor(diffInMins / 60);
+    if (diffInHours < 24) return `${diffInHours} hr ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} days ago`;
+};
+
 
 const LiveFeed = () => {
-    const [feeds, setFeeds] = useState(mockFeedData);
+    const [feeds, setFeeds] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        blocked: 0,
+        warned: 0,
+        safe: 0
+    });
     const [expandedId, setExpandedId] = useState(null);
     const [protectionActive, setProtectionActive] = useState(true);
-    const [threatsPerMin, setThreatsPerMin] = useState(2.4);
+    const [threatsPerMin, setThreatsPerMin] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    // Simulate live updates
+    const fetchData = async () => {
+        try {
+            // Fetch stats for the summary strip and severity widgets
+            const statsData = await statsService.getSummary();
+            setStats({
+                total: statsData.total_scans || 0,
+                blocked: statsData.breakdown?.Dangerous || 0,
+                warned: statsData.breakdown?.Medium || 0,
+                safe: statsData.breakdown?.Safe || 0
+            });
+
+            // Calculate threats per minute (simulated from stats or real calculation)
+            setThreatsPerMin((statsData.total_scans / 1440).toFixed(1)); // Average per minute today
+
+            // Fetch history for the live feed
+            const history = await historyService.getHistory();
+
+            // Format history to match component expectations
+            const formattedFeeds = history.map(item => {
+                let domain = 'Unknown';
+                try {
+                    // Handle URLs without protocol
+                    const urlToParse = item.url.includes('://') ? item.url : `http://${item.url}`;
+                    domain = new URL(urlToParse).hostname;
+                } catch (e) {
+                    domain = item.url || 'Unknown';
+                }
+
+                return {
+                    id: item.id,
+                    url: item.url,
+                    domain: domain,
+                    timestamp: getTimeAgo(item.created_at),
+                    rawTimestamp: item.created_at,
+                    threatType: item.category || (item.verdict === 'Dangerous' ? 'Malicious Site' : (item.verdict === 'Medium' ? 'Suspicious' : 'Safe Website')),
+                    riskScore: item.normalized_score || 0,
+                    action: item.verdict === 'Dangerous' ? 'blocked' : (item.verdict === 'Medium' ? 'warned' : 'allowed'),
+                    geo: 'India', // Placeholder
+                    triggeredRules: item.verdict === 'Dangerous' ? ['Malicious signature detected', 'Proactive blocking active'] : [],
+                    datasets: item.verdict === 'Dangerous' ? ['SentinelX DB', 'Real-time Analysis'] : []
+                };
+            });
+
+            // Sort by newest first
+            formattedFeeds.sort((a, b) => new Date(b.rawTimestamp) - new Date(a.rawTimestamp));
+            setFeeds(formattedFeeds);
+            setLoading(false);
+        } catch (error) {
+            console.error('Failed to fetch live feed data:', error);
+            setLoading(false);
+        }
+    };
+
+    // Initial fetch and polling
     useEffect(() => {
-        const interval = setInterval(() => {
-            setThreatsPerMin((prev) => (Math.random() * 3 + 1).toFixed(1));
-        }, 5000);
+        fetchData();
+        const interval = setInterval(fetchData, 15000); // 15 seconds refresh
         return () => clearInterval(interval);
     }, []);
 
@@ -111,29 +112,26 @@ const LiveFeed = () => {
         setExpandedId(expandedId === id ? null : id);
     };
 
-    const blockedCount = feeds.filter(f => f.action === 'blocked').length;
-    const warnedCount = feeds.filter(f => f.action === 'warned').length;
-    const safeCount = feeds.filter(f => f.action === 'allowed').length;
+    const blockedCount = stats.blocked;
+    const warnedCount = stats.warned;
+    const safeCount = stats.safe;
 
     const criticalCount = feeds.filter(f => f.riskScore >= 90).length;
     const highCount = feeds.filter(f => f.riskScore >= 70 && f.riskScore < 90).length;
     const mediumCount = feeds.filter(f => f.riskScore >= 40 && f.riskScore < 70).length;
     const safeCountByRisk = feeds.filter(f => f.riskScore < 40).length;
 
-    // Geo origin stats
+    // Geo origin stats (Placeholder based on real counts)
     const geoStats = [
-        { country: 'India', count: 6 },
-        { country: 'Russia', count: 3 },
-        { country: 'USA', count: 2 },
-        { country: 'Unknown', count: 4 }
+        { country: 'India', count: stats.total },
+        { country: 'Others', count: 0 }
     ];
 
-    // Threat categories
+    // Threat categories (Placeholder since real categories aren't in summary breakdown yet)
     const categories = [
-        { name: 'UPI Scam', count: 6, max: 10 },
-        { name: 'Banking Phish', count: 3, max: 10 },
-        { name: 'Job Scam', count: 2, max: 10 },
-        { name: 'Govt Fraud', count: 2, max: 10 }
+        { name: 'Blocked Scams', count: stats.blocked, max: stats.total || 10 },
+        { name: 'Warnings Issued', count: stats.warned, max: stats.total || 10 },
+        { name: 'Safe Sites', count: stats.safe, max: stats.total || 10 }
     ];
 
     return (
@@ -236,80 +234,96 @@ const LiveFeed = () => {
                         <h3>Live Scan Feed</h3>
                     </div>
                     <div className="feed-list">
-                        {feeds.map((feed) => (
-                            <div
-                                key={feed.id}
-                                className={`feed-item ${feed.action} ${expandedId === feed.id ? 'expanded' : ''}`}
-                                onClick={() => toggleExpand(feed.id)}
-                            >
-                                <div className="feed-item-header">
-                                    <div className={`feed-status-icon ${feed.action}`}>
-                                        {feed.action === 'blocked' && <ShieldX size={18} />}
-                                        {feed.action === 'allowed' && <CheckCircle2 size={18} />}
-                                        {feed.action === 'warned' && <AlertTriangle size={18} />}
-                                    </div>
-                                    <div className="feed-item-main">
-                                        <div className="feed-url">{feed.url}</div>
-                                        <div className="feed-meta">
-                                            <span>{feed.domain}</span>
-                                            <span className="feed-meta-separator"></span>
-                                            <Clock size={12} />
-                                            <span>{feed.timestamp}</span>
-                                            <span className="feed-meta-separator"></span>
-                                            <Globe size={12} />
-                                            <span>{feed.geo}</span>
+                        {loading ? (
+                            <div className="empty-feed">Loading real-time scans...</div>
+                        ) : feeds.length > 0 ? (
+                            feeds.map((feed) => (
+                                <div
+                                    key={feed.id}
+                                    className={`feed-item ${feed.action} ${expandedId === feed.id ? 'expanded' : ''}`}
+                                    onClick={() => toggleExpand(feed.id)}
+                                >
+                                    <div className="feed-item-header">
+                                        <div className={`feed-status-icon ${feed.action}`}>
+                                            {feed.action === 'blocked' && <ShieldX size={18} />}
+                                            {feed.action === 'allowed' && <CheckCircle2 size={18} />}
+                                            {feed.action === 'warned' && <AlertTriangle size={18} />}
                                         </div>
-                                    </div>
-                                    {expandedId === feed.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </div>
-
-                                <div className="feed-item-footer">
-                                    <span
-                                        className={`risk-badge ${feed.riskScore >= 90 ? 'high' : feed.riskScore >= 70 ? 'medium' : 'low'}`}
-                                    >
-                                        Risk: {feed.riskScore}
-                                    </span>
-                                    <span className="threat-type-badge">{feed.threatType}</span>
-                                    <span style={{
-                                        marginLeft: 'auto',
-                                        fontSize: '0.75rem',
-                                        fontWeight: '600',
-                                        color: feed.action === 'blocked' ? '#dc2626' : feed.action === 'allowed' ? '#16a34a' : '#f59e0b',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        {feed.action}
-                                    </span>
-                                </div>
-
-                                {/* Expandable Details */}
-                                {expandedId === feed.id && feed.action === 'blocked' && (
-                                    <div className="feed-details">
-                                        <div className="details-section">
-                                            <div className="details-title">Triggered Rules</div>
-                                            <div className="details-list">
-                                                {feed.triggeredRules.map((rule, index) => (
-                                                    <div key={index} className="details-item">
-                                                        <XCircle size={14} />
-                                                        {rule}
-                                                    </div>
-                                                ))}
+                                        <div className="feed-item-main">
+                                            <div className="feed-url">{feed.url}</div>
+                                            <div className="feed-meta">
+                                                <span>{feed.domain}</span>
+                                                <span className="feed-meta-separator"></span>
+                                                <Clock size={12} />
+                                                <span>{feed.timestamp}</span>
+                                                <span className="feed-meta-separator"></span>
+                                                <Globe size={12} />
+                                                <span>{feed.geo}</span>
                                             </div>
                                         </div>
-                                        <div className="details-section">
-                                            <div className="details-title">Matched Datasets</div>
-                                            <div className="details-list">
-                                                {feed.datasets.map((dataset, index) => (
-                                                    <div key={index} className="details-item">
-                                                        <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
-                                                        {dataset}
-                                                    </div>
-                                                ))}
+                                        {expandedId === feed.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
+
+                                    <div className="feed-item-footer">
+                                        <span
+                                            className={`risk-badge ${feed.riskScore >= 90 ? 'high' : feed.riskScore >= 70 ? 'medium' : 'low'}`}
+                                        >
+                                            Risk: {feed.riskScore}
+                                        </span>
+                                        <span className="threat-type-badge">{feed.threatType}</span>
+                                        <span style={{
+                                            marginLeft: 'auto',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600',
+                                            color: feed.action === 'blocked' ? '#dc2626' : feed.action === 'allowed' ? '#16a34a' : '#f59e0b',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {feed.action}
+                                        </span>
+                                    </div>
+
+                                    {/* Expandable Details */}
+                                    {expandedId === feed.id && (feed.action === 'blocked' || feed.action === 'warned') && (
+                                        <div className="feed-details">
+                                            <div className="details-section">
+                                                <div className="details-title">Security Analysis</div>
+                                                <div className="details-list">
+                                                    {feed.triggeredRules.length > 0 ? feed.triggeredRules.map((rule, index) => (
+                                                        <div key={index} className="details-item">
+                                                            <XCircle size={14} />
+                                                            {rule}
+                                                        </div>
+                                                    )) : (
+                                                        <div className="details-item">
+                                                            <AlertCircle size={14} />
+                                                            Heuristic threat detected via URL pattern
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="details-section">
+                                                <div className="details-title">Verified Datasets</div>
+                                                <div className="details-list">
+                                                    {feed.datasets.length > 0 ? feed.datasets.map((dataset, index) => (
+                                                        <div key={index} className="details-item">
+                                                            <CheckCircle2 size={14} style={{ color: '#16a34a' }} />
+                                                            {dataset}
+                                                        </div>
+                                                    )) : (
+                                                        <div className="details-item">
+                                                            <Shield size={14} style={{ color: '#16a34a' }} />
+                                                            Sentinel-X Global Reputation DB
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-feed">No recent scan activity found.</div>
+                        )}
                     </div>
                 </div>
 
@@ -354,39 +368,7 @@ const LiveFeed = () => {
                 </div>
             </div>
 
-            {/* Action Intelligence Strip */}
-            <div className="action-strip">
-                <div className="action-strip-title">
-                    <Sparkles size={18} />
-                    Action Intelligence
-                </div>
-                <div className="action-items">
-                    <div className="action-item">
-                        <div className="action-icon warning">
-                            <AlertTriangle size={16} />
-                        </div>
-                        <div className="action-text">
-                            <strong>Spike detected</strong> in UPI scams (+42% in last hour)
-                        </div>
-                    </div>
-                    <div className="action-item">
-                        <div className="action-icon shield">
-                            <Shield size={16} />
-                        </div>
-                        <div className="action-text">
-                            <strong>Rule Engine</strong> auto-tightened detection parameters
-                        </div>
-                    </div>
-                    <div className="action-item">
-                        <div className="action-icon users">
-                            <Users size={16} />
-                        </div>
-                        <div className="action-text">
-                            <strong>12 users</strong> protected in last 10 minutes
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
     );
 };

@@ -8,6 +8,14 @@ export const scannerService = {
   },
 };
 
+// History Service
+export const historyService = {
+  getHistory: async () => {
+    const response = await api.get('/api/scan/history');
+    return response.data;
+  },
+};
+
 // Sandbox Service
 export const sandboxService = {
   submitScan: async (url) => {
@@ -24,6 +32,10 @@ export const sandboxService = {
 export const reportService = {
   reportScam: async (url) => {
     const response = await api.post('/api/report', { url });
+    return response.data;
+  },
+  getAllReports: async () => {
+    const response = await api.get('/api/community/feed');
     return response.data;
   },
 };
@@ -66,6 +78,14 @@ export const aiService = {
 export const healthService = {
   check: async () => {
     const response = await api.get('/api/health');
+    return response.data;
+  },
+};
+
+// Leaderboard Service (Public - no auth required)
+export const leaderboardService = {
+  getLeaderboard: async () => {
+    const response = await api.get('/api/leaderboard');
     return response.data;
   },
 };

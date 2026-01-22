@@ -35,6 +35,9 @@ import TestPage from './pages/TestPage';
 import Community from './pages/Community';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Navigate } from 'react-router-dom';
+import { authService } from './services/auth';
 import './App.css';
 
 // Logo component
@@ -177,18 +180,30 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/scanner" element={<Scanner />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/live-feed" element={<LiveFeed />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/sandbox" element={<Sandbox />} />
+            {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/rule-engine" element={<RuleEngine />} />
-            <Route path="/report" element={<ReportScam />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/extension" element={<Extension />} />
+
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={
+                authService.isAuthenticated() ? (
+                  <ProtectedRoute><Landing /></ProtectedRoute>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route path="/scanner" element={<ProtectedRoute><Scanner /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/live-feed" element={<ProtectedRoute><LiveFeed /></ProtectedRoute>} />
+            <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+            <Route path="/sandbox" element={<ProtectedRoute><Sandbox /></ProtectedRoute>} />
+            <Route path="/rule-engine" element={<ProtectedRoute><RuleEngine /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><ReportScam /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/extension" element={<ProtectedRoute><Extension /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>
