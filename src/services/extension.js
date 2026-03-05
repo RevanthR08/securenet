@@ -6,7 +6,7 @@
  */
 
 // Extension ID - get from chrome://extensions/
-const EXTENSION_ID = "ggmagkfoefolcgfclpcdddibgfoibflb";
+const EXTENSION_ID = "ljeecggbebiegedpdngcomdbdpjiiima";
 
 /**
  * Syncs authentication to Sentinel-X Chrome Extension

@@ -239,7 +239,7 @@ const LiveFeed = () => {
                         ) : feeds.length > 0 ? (
                             feeds.map((feed) => (
                                 <div
-                                    key={feed.id}
+                                    key={`${feed.url}-${feed.rawTimestamp}`}
                                     className={`feed-item ${feed.action} ${expandedId === feed.id ? 'expanded' : ''}`}
                                     onClick={() => toggleExpand(feed.id)}
                                 >
@@ -250,7 +250,7 @@ const LiveFeed = () => {
                                             {feed.action === 'warned' && <AlertTriangle size={18} />}
                                         </div>
                                         <div className="feed-item-main">
-                                            <div className="feed-url">{feed.url}</div>
+                                            <div className="feed-url" title={feed.url}>{feed.url}</div>
                                             <div className="feed-meta">
                                                 <span>{feed.domain}</span>
                                                 <span className="feed-meta-separator"></span>
@@ -268,6 +268,7 @@ const LiveFeed = () => {
                                         <span
                                             className={`risk-badge ${feed.riskScore >= 90 ? 'high' : feed.riskScore >= 70 ? 'medium' : 'low'}`}
                                         >
+                                            
                                             Risk: {feed.riskScore}
                                         </span>
                                         <span className="threat-type-badge">{feed.threatType}</span>
